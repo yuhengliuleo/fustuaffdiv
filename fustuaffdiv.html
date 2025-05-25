@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>请假信息编辑器</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        /* 顶部蓝色标题栏（固定定位） */
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+        }
+
+        /* 绿色状态栏 */
+        .status-bar {
+            background-color: #34a853;
+            color: white;
+            padding: 12px 15px;
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .applicant-info {
+            text-align: right;
+        }
+        .applicant {
+            font-size: 16px;
+        }
+        .time {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        /* 主内容区 */
+        .content {
+            padding: 0 15px;
+            margin-top: 90px;  /* 从105px减少到90px */
+            margin-bottom: 70px;
+        }
+
+        /* 区块标题（黑体不加粗居左） */
+        .section-title {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            font-weight: normal;
+            padding: 5px 0 5px 0;  /* 减少上下padding */
+            margin-top: 0;         /* 移除默认margin */
+            color: #000;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        /* 白色信息卡片 */
+        .card {
+            background-color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .info-row {
+            display: flex;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            width: 80px;
+            color: #666;
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            text-align: left;
+        }
+        .info-value {
+            flex: 1;
+            color: #000;
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            text-align: right;
+            font-weight: normal;
+        }
+        .more-link {
+            color: #1a73e8;
+            text-align: center;
+            padding: 10px 15px;
+            display: block;
+            font-size: 14px;
+        }
+
+        /* 底部按钮 */
+        .footer {
+            padding: 15px;
+            background-color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+        }
+        .view-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 编辑表单样式 */
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .submit-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <div class="header">请假信息编辑器</div>
+    
+    <!-- 编辑表单部分 -->
+    <div class="form-container">
+        <h1>请假信息编辑</h1>
+        
+        <div class="form-group">
+            <label for="applicant">申请人姓名：</label>
+            <input type="text" id="applicant" placeholder="例如：苏靖远">
+        </div>
+        
+        <div class="form-group">
+            <label for="team">大队：</label>
+            <input type="text" id="team" placeholder="例如：网安系学生大队">
+        </div>
+        
+        <div class="form-group">
+            <label for="group">区队：</label>
+            <input type="text" id="group" placeholder="例如：3008001">
+        </div>
+        
+        <div class="form-group">
+            <label for="leaveType">请假种类：</label>
+            <select id="leaveType">
+                <option value="周末请假">周末请假</option>
+                <option value="节假日请假">节假日请假</option>
+                <option value="病假">病假</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="leaveCategory">请假类型：</label>
+            <select id="leaveCategory">
+                <option value="事假">事假</option>
+                <option value="公差">公差</option>
+                <option value="病假">病假</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="startTime">开始时间：</label>
+            <input type="datetime-local" id="startTime">
+        </div>
+        
+        <div class="form-group">
+            <label for="endTime">结束时间：</label>
+            <input type="datetime-local" id="endTime">
+        </div>
+        
+        <div class="form-group">
+            <label for="destination">请假去向：</label>
+            <input type="text" id="destination" placeholder="例如：江苏省南京市">
+        </div>
+        
+        <button class="submit-btn" onclick="generatePage()">生成请假单</button>
+    </div>
+
+    <script>
+        // 生成最终页面
+        function generatePage() {
+            // 获取表单值
+            const applicant = document.getElementById('applicant').value || '苏靖远';
+            const team = document.getElementById('team').value || '网安系学生大队';
+            const group = document.getElementById('group').value || '3008001';
+            const leaveType = document.getElementById('leaveType').value;
+            const leaveCategory = document.getElementById('leaveCategory').value;
+            const startTime = formatDateTime(document.getElementById('startTime').value);
+            const endTime = formatDateTime(document.getElementById('endTime').value);
+            const destination = document.getElementById('destination').value || '江苏省南京市';
+            const days = calculateDays(startTime, endTime);
+            const now = formatCurrentDateTime();
+
+            // 生成HTML内容
+            const htmlContent = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${applicant}的请假单</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+        }
+        .status-bar {
+            background-color: #34a853;
+            color: white;
+            padding: 12px 15px;
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .applicant-info {
+            text-align: right;
+        }
+        .applicant {
+            font-size: 16px;
+        }
+        .time {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+        .content {
+            padding: 0 15px;
+            margin-top: 90px;
+            margin-bottom: 70px;
+        }
+        .section-title {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            font-weight: normal;
+            padding: 5px 0 5px 0;
+            margin-top: 0;
+            color: #000;
+            text-align: left;
+            font-size: 16px;
+        }
+        .card {
+            background-color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .info-row {
+            display: flex;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            width: 80px;
+            color: #666;
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            text-align: left;
+        }
+        .info-value {
+            flex: 1;
+            color: #000;
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            text-align: right;
+            font-weight: normal;
+        }
+        .more-link {
+            color: #1a73e8;
+            text-align: center;
+            padding: 10px 15px;
+            display: block;
+            font-size: 14px;
+        }
+        .footer {
+            padding: 15px;
+            background-color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+        }
+        .view-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">请假信息查看</div>
+    
+    <div class="status-bar">
+        <div class="status">审核通过</div>
+        <div class="applicant-info">
+            <div class="applicant">${applicant}--发起申请</div>
+            <div class="time">${now}</div>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="section-title">个人信息</div>
+        <div class="card">
+            <div class="info-row">
+                <div class="info-label">大队：</div>
+                <div class="info-value">${team}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">区队：</div>
+                <div class="info-value">${group}</div>
+            </div>
+        </div>
+        
+        <div class="section-title">请假信息</div>
+        <div class="card">
+            <div class="info-row">
+                <div class="info-label">请假种类：</div>
+                <div class="info-value">${leaveType}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">请假类型：</div>
+                <div class="info-value">${leaveCategory}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">开始时间：</div>
+                <div class="info-value">${startTime}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">结束时间：</div>
+                <div class="info-value">${endTime}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">请假天数：</div>
+                <div class="info-value">${days}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">请假去向：</div>
+                <div class="info-value">${destination}</div>
+            </div>
+            <a href="#" class="more-link">点击查看更多</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <button class="view-btn">查看请假位置</button>
+    </div>
+</body>
+</html>`;
+
+            // 在新标签页中打开
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+        }
+
+        // 辅助函数：计算天数差
+        function calculateDays(start, end) {
+            if (!start || !end) return '0';
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            const diffTime = endDate - startDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays > 0 ? diffDays : '0';
+        }
+
+        // 辅助函数：格式化日期时间
+        function formatDateTime(datetimeStr) {
+            if (!datetimeStr) return '';
+            const date = new Date(datetimeStr);
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}`;
+        }
+
+        // 辅助函数：格式化当前日期时间
+        function formatCurrentDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+    </script>
+</body>
+</html>
