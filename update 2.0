@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>请假信息编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #f4f5f9;
+            color: #333;
+            line-height: 1.5;
+            font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 18px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            padding-top: max(15px, env(safe-area-inset-top, 0px));
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: max(100px, calc(60px + env(safe-area-inset-top, 0px)));
+        }
+        .form-container h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 15px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .submit-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+        .time-input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+        }
+        .time-input-row .datetime-input {
+            flex: 1;
+            min-width: 0;
+        }
+        .time-input-row .sec-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .time-input-row input[type="number"] {
+            width: 4.2em;
+            padding: 10px 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">请假信息编辑器</div>
+
+    <div class="form-container">
+        <h1>请假信息编辑</h1>
+
+        <div class="form-group">
+            <label for="applicant">申请人姓名：</label>
+            <input type="text" id="applicant" placeholder="例如：苏靖远">
+        </div>
+
+        <div class="form-group">
+            <label>发起时间（绿区姓名下方，格式 YYYY-MM-DD HH:MM:SS）：</label>
+            <div class="time-input-row">
+                <input class="datetime-input" type="datetime-local" id="applicationTimeLocal" step="60" title="选择日期与时刻（到分）">
+                <div class="sec-wrap">
+                    <label for="applicationTimeSec" style="margin:0; color:#888; font-size:14px;">秒</label>
+                    <input type="number" id="applicationTimeSec" min="0" max="59" value="0" inputmode="numeric" title="0–59 秒">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="team">大队：</label>
+            <input type="text" id="team" placeholder="例如：网安系学生大队">
+        </div>
+
+        <div class="form-group">
+            <label for="group">区队：</label>
+            <input type="text" id="group" placeholder="例如：3008001">
+        </div>
+
+        <div class="form-group">
+            <label for="leaveType">请假种类：</label>
+            <select id="leaveType">
+                <option value="周末请假">周末请假</option>
+                <option value="节假日请假">节假日请假</option>
+                <option value="病假">病假</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="leaveCategory">请假类型：</label>
+            <select id="leaveCategory">
+                <option value="事假">事假</option>
+                <option value="公差">公差</option>
+                <option value="病假">病假</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="startTime">开始时间：</label>
+            <input type="datetime-local" id="startTime">
+        </div>
+
+        <div class="form-group">
+            <label for="endTime">结束时间：</label>
+            <input type="datetime-local" id="endTime">
+        </div>
+
+        <div class="form-group">
+            <label for="destination">请假去向：</label>
+            <input type="text" id="destination" placeholder="例如：江苏省南京市">
+        </div>
+
+        <button class="submit-btn" type="button" onclick="generatePage()">生成请假单</button>
+    </div>
+
+    <script>
+        // 双弧动态交织：左圆自左下向左鼓、走势向右；右圆自右下向右鼓、走势向左，在中上交汇
+        // 浅底=非交叠的亮区；两弧叠半透明=交叠区自然加深；略加重椭圆=视觉重心（可看成叠色最深处）
+        // X形反向相交圆弧SVG - 两个圆弧在中心交叉形成X形结构
+        const LAYERED_GREEN_SVG = encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice">' +
+            '<rect width="400" height="120" fill="#5BC05B"/>' +
+            // 左上→右下的圆弧 (从左上方开始，向右下方弯曲)
+            '<path d="M-80 20 Q150 60 350 180" stroke="#3AA83A" stroke-width="45" fill="none" stroke-opacity="0.35" stroke-linecap="round"/>' +
+            // 右上→左下的圆弧 (从右上方开始，向左下方弯曲)
+            '<path d="M480 20 Q250 60 50 180" stroke="#3AA83A" stroke-width="45" fill="none" stroke-opacity="0.35" stroke-linecap="round"/>' +
+            // 中心交叉区域的加深效果
+            '<ellipse cx="200" cy="90" rx="60" ry="30" fill="#2F9D2F" fill-opacity="0.15"/>' +
+            '</svg>'
+        );
+
+        const GENERATED_PAGE_CSS = `
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #f4f5f9;
+            color: #333;
+            line-height: 1.5;
+            font-size: 15px;
+            font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .fixed-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: #fff;
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 48px;
+            padding: 0 10px 0 6px;
+            background: #fff;
+            border-bottom: 1px solid #ededed;
+        }
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            min-width: 80px;
+        }
+        .nav-right {
+            justify-content: flex-end;
+        }
+        .nav-ico {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            color: #1a1a1a;
+        }
+        .nav-ico svg {
+            display: block;
+        }
+        .nav-title {
+            flex: 1;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+        .status-bar {
+            position: relative;
+            color: #fff;
+            padding: 18px 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background-color: #5BC05B;
+            background-image:
+                linear-gradient(90deg,
+                    rgba(0, 0, 0, 0.02) 0%,
+                    rgba(0, 0, 0, 0) 45%,
+                    rgba(255, 255, 255, 0.03) 100%),
+                url("data:image/svg+xml,${LAYERED_GREEN_SVG}");
+            background-repeat: no-repeat, no-repeat;
+            background-size: 100% 100%, 100% 100%;
+            background-position: 0 0, 0 0;
+        }
+        .status {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            flex-shrink: 0;
+        }
+        .applicant-info {
+            text-align: right;
+            min-width: 0;
+        }
+        .applicant {
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .applicant::after {
+            content: " >";
+            font-size: 14px;
+            opacity: 0.95;
+        }
+        .time {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 6px;
+        }
+        .content {
+            padding: 10px 12px 20px;
+            margin-top: calc(env(safe-area-inset-top, 0px) + 137px);
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 400;
+            color: #888;
+            text-align: left;
+            margin: 14px 0 8px 2px;
+        }
+        .section-title:first-of-type {
+            margin-top: 4px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 48px;
+            padding: 12px 15px;
+            border-bottom: 1px solid #ebebeb;
+        }
+        .info-row:last-of-type {
+            border-bottom: none;
+        }
+        .info-label {
+            flex: 0 0 auto;
+            max-width: 42%;
+            color: #666;
+            text-align: left;
+            font-size: 15px;
+        }
+        .info-value {
+            flex: 1;
+            color: #000;
+            text-align: right;
+            font-size: 15px;
+            font-weight: 400;
+            word-break: break-all;
+            margin-left: 8px;
+        }
+        .more-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #999;
+            text-decoration: none;
+            text-align: center;
+            padding: 14px 12px 16px;
+            font-size: 14px;
+            border-top: 1px solid #f0f0f0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .more-ico {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border: 1px solid #d0d0d0;
+            border-radius: 50%;
+            background: #fff;
+        }
+        .more-ico svg {
+            display: block;
+            width: 10px;
+            height: 10px;
+            color: #999;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99;
+            background: #fff;
+            padding: 0 0 env(safe-area-inset-bottom, 0);
+            box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
+        }
+        .view-btn {
+            width: 100%;
+            background: #1e56a0;
+            color: #fff;
+            border: none;
+            border-radius: 0;
+            padding: 16px 12px;
+            font-size: 16px;
+            font-weight: 500;
+            font-family: inherit;
+        }`;
+
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function toDatetimeLocalString(d) {
+            const p = (n) => String(n).padStart(2, '0');
+            return (
+                d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes())
+            );
+        }
+
+        function getApplicationTimeDisplay() {
+            const localVal = document.getElementById('applicationTimeLocal').value;
+            if (!localVal) return '';
+            const d = new Date(localVal);
+            if (Number.isNaN(d.getTime())) return '';
+            const secInput = document.getElementById('applicationTimeSec');
+            let s = 0;
+            if (secInput) {
+                s = parseInt(secInput.value, 10);
+                if (Number.isNaN(s) || s < 0) s = 0;
+                if (s > 59) s = 59;
+            }
+            d.setSeconds(s, 0);
+            return formatFullDateTime(d);
+        }
+
+        function formatFullDateTime(d) {
+            const p = (n) => String(n).padStart(2, '0');
+            return (
+                d.getFullYear() +
+                '-' + p(d.getMonth() + 1) +
+                '-' + p(d.getDate()) +
+                ' ' + p(d.getHours()) +
+                ':' + p(d.getMinutes()) +
+                ':' + p(d.getSeconds())
+            );
+        }
+
+        function initApplicationTimeFields() {
+            const localInput = document.getElementById('applicationTimeLocal');
+            const secInput = document.getElementById('applicationTimeSec');
+            if (!localInput) return;
+            const now = new Date();
+            localInput.value = toDatetimeLocalString(now);
+            if (secInput) secInput.value = String(now.getSeconds());
+        }
+
+        function getGeneratedPageHtml(title, bodyInner) {
+            return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>${GENERATED_PAGE_CSS}</style>
+</head>
+<body>
+${bodyInner}
+</body>
+</html>`;
+        }
+
+        function generatePage() {
+            const applicant = document.getElementById('applicant').value || '苏靖远';
+            const team = document.getElementById('team').value || '网安系学生大队';
+            const group = document.getElementById('group').value || '3008001';
+            const leaveType = document.getElementById('leaveType').value;
+            const leaveCategory = document.getElementById('leaveCategory').value;
+            const startTime = formatDateTime(document.getElementById('startTime').value);
+            const endTime = formatDateTime(document.getElementById('endTime').value);
+            const destination = document.getElementById('destination').value || '江苏省南京市';
+            const days = calculateDays(startTime, endTime);
+            const applicationTimeStr = getApplicationTimeDisplay();
+            const applicationTimeDisplay = applicationTimeStr ? escapeHtml(applicationTimeStr) : '——';
+
+            const bodyInner = `
+    <div class="fixed-top">
+        <div class="top-nav">
+            <div class="nav-left">
+                <span class="nav-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></span>
+                <span class="nav-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span>
+            </div>
+            <div class="nav-title">请假信息查看</div>
+            <div class="nav-right">
+                <span class="nav-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg></span>
+            </div>
+        </div>
+        <div class="status-bar">
+            <div class="status">审核通过</div>
+            <div class="applicant-info">
+                <div class="applicant">${escapeHtml(applicant)}--发起申请</div>
+                <div class="time">${applicationTimeDisplay}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="section-title">个人信息</div>
+        <div class="card">
+            <div class="info-row">
+                <div class="info-label">大队：</div>
+                <div class="info-value">${escapeHtml(team)}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">区队：</div>
+                <div class="info-value">${escapeHtml(group)}</div>
+            </div>
+        </div>
+
+        <div class="section-title">请假信息</div>
+        <div class="card">
+            <div class="info-row">
+                <div class="info-label">请假种类：</div>
+                <div class="info-value">${escapeHtml(leaveType)}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">请假类型：</div>
+                <div class="info-value">${escapeHtml(leaveCategory)}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">开始时间：</div>
+                <div class="info-value">${escapeHtml(startTime)}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">结束时间：</div>
+                <div class="info-value">${escapeHtml(endTime)}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">请假天数：</div>
+                <div class="info-value">${escapeHtml(String(days))}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">请假去向：</div>
+                <div class="info-value">${escapeHtml(destination)}</div>
+            </div>
+            <a href="#" class="more-link" onclick="return false">
+                <span>点击查看更多</span>
+                <span class="more-ico" aria-hidden="true"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M5 2.5v5M2.5 5.2L5 7.5l2.5-2.3"/></svg></span>
+            </a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button type="button" class="view-btn">查看请假位置</button>
+    </div>`;
+
+            const htmlContent = getGeneratedPageHtml(`${escapeHtml(applicant)}的请假单`, bodyInner);
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+        }
+
+        function calculateDays(start, end) {
+            if (!start || !end) return '0';
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            const diffTime = endDate - startDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays > 0 ? diffDays : '0';
+        }
+
+        function formatDateTime(datetimeStr) {
+            if (!datetimeStr) return '';
+            const date = new Date(datetimeStr);
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}`;
+        }
+
+        initApplicationTimeFields();
+    </script>
+</body>
+</html>
