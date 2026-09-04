@@ -117,8 +117,20 @@
         </div>
 
         <div class="form-group">
-            <label for="team">大队：</label>
-            <input type="text" id="team" placeholder="例如：网安系学生大队">
+            <label for="team">学院：</label>
+            <select id="team">
+                <option value="公安管理学院">公安管理学院</option>
+                <option value="治安学院">治安学院</option>
+                <option value="侦查学院">侦查学院</option>
+                <option value="刑事科学技术学院">刑事科学技术学院</option>
+                <option value="网络空间安全学院" selected>网络空间安全学院</option>
+                <option value="法学院">法学院</option>
+                <option value="警体战训学院">警体战训学院</option>
+                <option value="国际合作学院（国际合作中心）">国际合作学院（国际合作中心）</option>
+                <option value="国家安全学院">国家安全学院</option>
+                <option value="数智警务技术学院">数智警务技术学院</option>
+                <option value="交通管理学院">交通管理学院</option>
+            </select>
         </div>
 
         <div class="form-group">
@@ -452,7 +464,7 @@ ${bodyInner}
 
         function generatePage() {
             const applicant = document.getElementById('applicant').value || '苏靖远';
-            const team = document.getElementById('team').value || '网安系学生大队';
+            const team = document.getElementById('team').value || '网络空间安全学院';
             const group = document.getElementById('group').value || '3008001';
             const leaveType = document.getElementById('leaveType').value;
             const leaveCategory = document.getElementById('leaveCategory').value;
@@ -488,7 +500,7 @@ ${bodyInner}
         <div class="section-title">个人信息</div>
         <div class="card">
             <div class="info-row">
-                <div class="info-label">大队：</div>
+                <div class="info-label">学院：</div>
                 <div class="info-value">${escapeHtml(team)}</div>
             </div>
             <div class="info-row">
