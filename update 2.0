@@ -29,14 +29,14 @@
             top: 0;
             width: 100%;
             z-index: 100;
-            padding-top: max(15px, env(safe-area-inset-top, 0px));
+            padding-top: 15px;
         }
 
         .form-container {
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            padding-top: max(100px, calc(60px + env(safe-area-inset-top, 0px)));
+            padding-top: 100px;
         }
         .form-container h1 {
             font-size: 18px;
@@ -197,13 +197,10 @@
             box-sizing: border-box;
         }
         body {
-            background-color: #f4f5f9;
+            background-color: #f5f5f5;
             color: #333;
             line-height: 1.5;
-            font-size: 15px;
-            font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            padding-bottom: env(safe-area-inset-bottom, 0px);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }
         .fixed-top {
             position: fixed;
@@ -212,7 +209,7 @@
             right: 0;
             z-index: 100;
             background: #fff;
-            padding-top: env(safe-area-inset-top, 0px);
+
         }
         .top-nav {
             display: flex;
@@ -296,7 +293,7 @@
         }
         .content {
             padding: 10px 12px 20px;
-            margin-top: calc(env(safe-area-inset-top, 0px) + 137px);
+            margin-top: 137px;
             margin-bottom: 20px;
         }
         .section-title {
@@ -379,7 +376,7 @@
             right: 0;
             z-index: 99;
             background: #fff;
-            padding: 0 0 env(safe-area-inset-bottom, 0);
+            padding: 15px;
             box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
         }
         .view-btn {
